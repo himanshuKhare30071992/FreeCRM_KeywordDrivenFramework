@@ -23,17 +23,12 @@ import java.io.IOException;
 import java.util.Properties;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.interactions.Actions;
 
 import com.qa.freeCRM.base.TestBase;
 import com.qa.freeCRM.utility.MyUtility;
@@ -54,6 +49,8 @@ public class KeywordEngine {
 	String locatorValue;
 	String keywordName;
 	String testData;
+	String testStep;
+	String executionStatus;
 	
 	WebElement element;
 	
@@ -67,7 +64,7 @@ public class KeywordEngine {
 		File file = new File(testDataSheetPath);
 		try 
 		{
-			FileInputStream fis = new FileInputStream(file);
+			fis = new FileInputStream(file);
 		} 
 		catch (FileNotFoundException e) 
 		{
@@ -89,104 +86,104 @@ public class KeywordEngine {
 		
 		for(int rowNo=2; rowNo<=rowCount; rowNo++)
 		{
-			keywordName = sheet.getRow(rowNo).getCell(2).toString().trim();
-			testData = sheet.getRow(rowNo).getCell(5).toString().trim();
-			locatorType = sheet.getRow(rowNo).getCell(3).toString().trim();
+			executionStatus = sheet.getRow(rowNo).getCell(6).toString().trim();
 			
-			if(!locatorType.equalsIgnoreCase("NA"))
+			if(!executionStatus.equalsIgnoreCase("N"))
 			{
-				locatorValue = sheet.getRow(rowNo).getCell(4).toString().trim();
-			}
-
-			String testStep = sheet.getRow(rowNo).getCell(1).getStringCellValue().trim();
-			
-			System.out.println("------keywordName | locatorType | locatorValue | testData-----------");
-			System.out.println(keywordName+" | "+locatorType+ " | "+locatorValue+" | "+testData);
-			System.out.println("---------------------------------------------------------------------------");
-		
-			System.out.println("KEYWORD at "+rowNo+" is "+keywordName);
-			
-			if(keywordName.isEmpty())
-			{
-				System.out.println("!!!!!!!!!!!!!-----WARNING------!!!!!!!!!!!!! No Keyword found at row number -> "+rowNo+" for step name ->"+testStep);
-			}
-			
-			
-			switch (keywordName) 
-			{
-			case "openBrowser":
-				baseObj = new TestBase();
-				prop = 	baseObj.init_Property();
-				String browserName =	prop.getProperty("browserName");
-				//System.out.println(browserName);
-				driver = baseObj.init_Launch(browserName);
-				break;
-
-			case "enterURL":
-				driver.get(testData);
-				break;	
+				keywordName = sheet.getRow(rowNo).getCell(2).toString().trim();
+				testData = sheet.getRow(rowNo).getCell(5).toString().trim();
+				locatorType = sheet.getRow(rowNo).getCell(3).toString().trim();
 				
-			case "close":
-				driver.close();
-				break;
-				
-				
-			default:
-				break;
-			}
-			
-			
-				
-			switch (locatorType) 
-			{
-			case "id":
-				break;
-				
-			case "name":
-				element =	 driver.findElement(By.name(locatorValue));
-			
-				if(keywordName.equalsIgnoreCase("sendKeys"))
+				if(!locatorType.equalsIgnoreCase("NA"))
 				{
-					if(testData.isEmpty() || testData.equalsIgnoreCase("na"))
+					locatorValue = sheet.getRow(rowNo).getCell(4).toString().trim();
+				}
+
+				testStep = sheet.getRow(rowNo).getCell(1).getStringCellValue().trim();
+				
+				System.out.println(rowNo+"#------keywordName | locatorType | locatorValue | testData-----------");
+				System.out.println(keywordName+" | "+locatorType+ " | "+locatorValue+" | "+testData);
+				System.out.println("______________________________________________________________________________________________");
+			
+//				System.out.println("KEYWORD at "+rowNo+" is "+keywordName);
+//				
+//				if(keywordName.isEmpty())
+//				{
+//					System.out.println("!!!!!!!!!!!!!-----WARNING------!!!!!!!!!!!!! No Keyword found at row number -> "+rowNo+" for step name ->"+testStep);
+//				}
+								
+				switch (keywordName) 
+				{
+				case "openBrowser":
+					baseObj = new TestBase();
+					prop = 	baseObj.init_Property();
+					String browserName =	prop.getProperty("browserName");
+					//System.out.println(browserName);
+					driver = baseObj.init_Launch(browserName);
+					break;
+
+				case "enterURL":
+					driver.get(testData);
+					break;	
+					
+				case "close":
+					driver.close();
+					break;
+					
+					
+				default:
+					break;
+				}
+				
+				
+					
+				switch (locatorType) 
+				{
+				case "id":
+					break;
+					
+				case "name":
+					element =	 driver.findElement(By.name(locatorValue));
+				
+					if(keywordName.equalsIgnoreCase("sendKeys"))
 					{
-						String testDataFromPropertyFile = prop.getProperty(locatorValue);
-						element.sendKeys(testDataFromPropertyFile);
+						if(testData.isEmpty() || testData.equalsIgnoreCase("na"))
+						{
+							String testDataFromPropertyFile = prop.getProperty(locatorValue);
+							element.sendKeys(testDataFromPropertyFile);
+						}
+						else
+						{
+							element.sendKeys(testData);
+						}
 					}
-					else
+					break;
+
+				case "xpath":
+					element =	 driver.findElement(By.xpath(locatorValue));
+					
+					if(keywordName.equalsIgnoreCase("sendKeys"))
 					{
 						element.sendKeys(testData);
 					}
-				}
-				break;
-
-			case "xpath":
-				element =	 driver.findElement(By.xpath(locatorValue));
-				
-				if(keywordName.equalsIgnoreCase("sendKeys"))
-				{
-					element.sendKeys(testData);
-				}
-				else if(keywordName.equalsIgnoreCase("click"))
-				{
-					element.click();
+					else if(keywordName.equalsIgnoreCase("click"))
+					{
+						element.click();
+						
+					}
+					else if(keywordName.equalsIgnoreCase("clickElementByAction"))
+					{
+						MyUtility.clickElementByAction(element);
+					}
 					
+					break;	
+					
+				default:
+					break;
 				}
-				else if(keywordName.equalsIgnoreCase("clickElementByAction"))
-				{
-					MyUtility.clickElementByAction(element);
-				}
-				
-				break;	
-				
-			default:
-				break;
+
 			}
 			
-			
 		}
-		
-		
-		
-		
 	}
 }
